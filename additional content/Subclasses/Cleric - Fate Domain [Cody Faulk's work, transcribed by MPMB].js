@@ -8,16 +8,15 @@
 
 /*	-INFORMATION-
 	Subject:	Subclass
-	Effect:		This script adds a subclass for the Cleric, called "Fate Domain"
-				This is taken from the DMs Guild website (https://www.dmsguild.com/product/194789/)
-				This subclass is made by Cody Faulk
+	Effect:		This script adds a subclass for the Cleric, called "Protection Domain"
+				
 	Code by:	MorePurpleMoreBetter
 	Date:		2017-11-29 (sheet v12.999)
 	
-	Please support the creator of this content (Cody Faulk) and download his material from the DMs Guild website: https://www.dmsguild.com/browse.php?author=Cody%20Faulk
+	
 */
 
-var iFileName = "Cleric - Fate Domain [Cody Faulk's work, transcribed by MPMB].js";
+var iFileName = "Cleric - Protection Domain .js";
 RequiredSheetVersion(12.999);
 
 SourceList["CF:FD"] = {
@@ -28,56 +27,91 @@ SourceList["CF:FD"] = {
 	date : "2016/12/08"
 };
 
-AddSubClass("cleric", "fate domain", {
-	regExpSearch : /^(?=.*(cleric|priest|clergy|acolyte))(?=.*fate).*$/i,
-	subname : "Fate Domain",
+AddSubClass("cleric", "protection domain", {
+	regExpSearch : /^(?=.*(cleric|priest|clergy|acolyte))(?=.*protection).*$/i,
+	subname : "Protection Domain",
 	source : ["CF:FD", 1],
-	spellcastingExtra : ["shield of faith", "shield", "augury", "nystul's magic aura", "clairvoyance", "nondetection", "divination", "death ward", "scrying", "legend lore"],
+	spellcastingExtra : ["compelled duel", "protection from good and evil", "aid", "protection from poison", "protection from energy", "slow", "guardian of faith", "otiluke's resilient sphere", "antilife shell", "wall of force"],
 	features : {
 		"subclassfeature1" : {
-			name : "Glimpse",
+			name : "Bonus Proficiency",
 			source : ["CF:FD", 0],
 			minlevel : 1,
-			description : "\n   " + "I learn the Guidance and Resistance cantrips" + "\n   " + "I can add my Wisdom modifier to initiative rolls",
-			spellcastingBonus : [{
-				name : "Glimpse (Guidance)",
-				spells : ["guidance"],
-				selection : ["guidance"],
-			}, {
-				name : "Glimpse (Resistance)",
-				spells : ["resistance"],
-				selection : ["resistance"],
-			}],
-			addMod : { type : "skill", field : "Init", mod : "Wis", text : "I add my Wisdom modifier to my initiative rolls." }
+			description : "\n   " + "I gain proficiency with heavy armor",
+			armorProfs : [false, false, true, false]
+			},
+		},
+		"subclassfeature1" : {
+			name : "Shield of the Faithful",
+			source : ["CF:FD", 0],
+			minlevel : 1,
+			description : "\n   " + "When a creature attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. To do so, you must be able to see both the attacker and the target.",
 		},
 		"subclassfeature2" : {
-			name : "Channel Divinity: Pierce the Veil",
+			name : "Channel Divinity: Radiant Defense",
 			source : ["CF:FD", 0],
 			minlevel : 2,
-			description : "\n   " + "As an action, I gain adv. to all Perception, Investigation, and Insight checks for 10 min",
+			description : "\n   " + "As an action, you channel blessed energy into an ally that you can see within 30 feet of you. The first time that ally is hit by an attack within the next minute, the attacker takes radiant damage equal to 2d10 + your cleric level.",
 			action : ["action", ""]
 		},
 		"subclassfeature6" : {
-			name : "Fate Foretold",
-			source : ["CF:FD", 0],
-			minlevel : 6,
-			description : "\n   " + "After a short or long rest, I roll dice and keep results to be used before my next rest" + "\n   " + "A result can replace an attack/save/ability check made by me or a creature I can see" + "\n   " + "I choose to switch them before the dice to be replaced are rolled; Max once per turn",
-			additional : ["", "", "", "", "", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 2d20, choose one", "after each rest, roll 4d20, choose two", "after each rest, roll 4d20, choose two", "after each rest, roll 4d20, choose two", "after each rest, roll 4d20, choose two"]
-		},
+				name : "Blessed Healer",
+				source : [["SRD", 17], ["P", 60]],
+				minlevel : 6,
+				description : "\n   " + "When I restore HP to another with a spell, I regain 2 + the spell (slot) level in HP",
+				calcChanges : {
+					spellAdd : [
+						// note that several healing spells are not present here because they don't restore hp at casting (only later)
+						function (spellKey, spellObj, spName) {
+							var startDescr = spellObj.description;
+							switch (spellKey) {
+								case "life transference" :
+									spellObj.description = spellObj.description.replace("Necrotic", "Necro").replace(", and", ",") + "; I then regain 2+SL hp";
+									break;
+								case "mass heal" :
+									spellObj.description = "Heal 700 hp, split over crea in range, each then +11 hp; also cures blind, deaf, diseases; I heal +11 hp";
+									break;
+								case "power word heal" :
+									spellObj.description = spellObj.description.replace(/heals all.*/i, "full hp; not charmed, frightened, paralyzed, stunned; can stand up as rea; if other, I heal 2+SL");
+									break;
+								case "regenerate" :
+									spellObj.description = spellObj.description.replace(" for rest of duration", "");
+								case "heal" :
+									spellObj.description = spellObj.description.replace("all diseases", "diseases");
+								case "cure wounds" :
+								case "healing word" :
+								case "mass cure wounds" :
+								case "mass healing word" :
+								case "prayer of healing" :
+									spellObj.description = spellObj.description.replace(/creatures?/i, "crea").replace("within", "in").replace("spellcasting ability modifier", "spellcasting ability mod") + "; if other, I heal 2+SL";
+							}
+							return startDescr !== spellObj.description;
+						},
+						"When I cast a spell that restores hit points to another creature than myself at the moment of casting, I also heal 2 + the level of the spell slot (or spell slot equivalent) hit points."
+					]
+				}
+			},
 		"subclassfeature8" : {
-			name : "Potent Spellcasting",
-			source : ["CF:FD", 0],
-			minlevel : 8,
-			description : "\n   " + "I add my Wisdom modifier to the damage I deal with my cleric cantrips",
-			calcChanges : {
-				atkCalc : ["if (classes.known.cleric && classes.known.cleric.level > 7 && thisWeapon[4].indexOf('cleric') !== -1 && thisWeapon[3] && SpellsList[thisWeapon[3]].level === 0) { output.extraDmg += What('Wis Mod'); }; ", "My cleric cantrips get my Wisdom modifier added to their damage."]
-			}
-		},
-		"subclassfeature17" : {
-			name : "Greater Portent",
-			source : ["CF:FD", 0],
-			minlevel : 17,
-			description : "\n   " + "I can roll 4d20 and choose two instead of 2d20 when using my Fate Foretold feature"
+				name : "Divine Strike",
+				source : [["SRD", 17], ["P", 60]],
+				minlevel : 8,
+				description : "\n   " + "Once per turn, when I hit a creature with a weapon attack, I can do extra damage",
+				additional : levels.map(function (n) {
+					if (n < 8) return "";
+					return "+" + (n < 14 ? 1 : 2) + "d8 radiant damage";
+				}),
+				calcChanges : {
+					atkAdd : [
+						function (fields, v) {
+							if (classes.known.cleric && classes.known.cleric.level > 7 && !v.isSpell) {
+								fields.Description += (fields.Description ? '; ' : '') + 'Once per turn +' + (classes.known.cleric.level < 14 ? 1 : 2) + 'd8 radiant damage';
+							}
+						},
+						"Once per turn, I can have one of my weapon attacks that hit do extra radiant damage."
+					]
+				}
+			},
+		
 		}
 	}
 });
